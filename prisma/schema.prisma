@@ -1,0 +1,151 @@
+// Prisma Schema - 多作者小说发布平台
+// 文档: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // 生产环境使用 PostgreSQL（Supabase）
+  // 本地开发如需 SQLite，将 provider 改为 "sqlite" 并在 .env 中设置 DATABASE_URL="file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================== 枚举类型 ==========================
+
+enum Role {
+  USER      // 普通用户：阅读、收藏、评论
+  AUTHOR    // 作者：发布小说、管理章节
+  ADMIN     // 管理员：审核小说、管理用户
+}
+
+enum NovelStatus {
+  ONGOING   // 连载中
+  COMPLETED // 完结
+}
+
+enum ReviewStatus {
+  PENDING   // 待审核
+  APPROVED  // 通过
+  REJECTED  // 驳回
+}
+
+// ========================== 数据模型 ==========================
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  role      Role     @default(USER)
+  avatar    String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 作者发布的小说
+  novels    Novel[]
+  // 用户发表的评论
+  comments  Comment[]
+  // 用户收藏
+  favorites Favorite[]
+  // 用户提交的作者申请
+  applications          AuthorApplication[] @relation("UserApplications")
+  // 作为管理员审核的作者申请
+  reviewedApplications AuthorApplication[] @relation("AdminReviewedApplications")
+
+  @@map("users")
+}
+
+model Novel {
+  id           Int           @id @default(autoincrement())
+  title        String
+  description  String
+  coverUrl     String?
+  category     String
+  status       NovelStatus   @default(ONGOING)
+  reviewStatus ReviewStatus  @default(PENDING)
+  authorId     Int
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  chapters  Chapter[]
+  comments  Comment[]
+  favorites Favorite[]
+
+  @@index([authorId])
+  @@index([category])
+  @@index([reviewStatus])
+  @@map("novels")
+}
+
+model Chapter {
+  id           Int      @id @default(autoincrement())
+  novelId      Int
+  serialNumber Int
+  title        String
+  content      String
+  publishedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  novel Novel @relation(fields: [novelId], references: [id], onDelete: Cascade)
+
+  @@unique([novelId, serialNumber]) // 同一小说内章节序号唯一
+  @@index([novelId])
+  @@map("chapters")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  userId    Int
+  novelId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  novel Novel @relation(fields: [novelId], references: [id], onDelete: Cascade)
+
+  @@index([novelId])
+  @@index([userId])
+  @@map("comments")
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  novelId   Int
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  novel Novel @relation(fields: [novelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, novelId]) // 同一用户对同一小说只能收藏一次
+  @@index([userId])
+  @@map("favorites")
+}
+model AuthorApplication {
+  id           Int           @id @default(autoincrement())
+  userId       Int
+  status       ReviewStatus  @default(PENDING)
+  reason       String                          // 申请理由
+  reviewNote   String?                         // 管理员审核备注
+  reviewedById Int?
+  reviewedAt   DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user        User  @relation("UserApplications", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy  User? @relation("AdminReviewedApplications", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@map("author_applications")
+}
+
+// 说明："作者"即 User 表中 role=AUTHOR 的用户，通过 Novel.authorId 关联到 User.id。
+// Prisma 不支持 type alias，因此 Novel.author 的关联类型直接使用 User。

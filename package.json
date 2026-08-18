@@ -1,0 +1,33 @@
+{
+  "name": "novel-platform",
+  "version": "1.0.0",
+  "description": "多作者小说发布平台 — React + Express + Prisma + SQLite/PostgreSQL",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "build": "npx prisma generate && npx prisma db push --accept-data-loss",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "node prisma/seed.js",
+    "install:all": "npm install && cd frontend && npm install",
+    "dev:full": "concurrently \"npm run dev\" \"cd frontend && npm run dev\""
+  },
+  "dependencies": {
+    "@prisma/client": "^6.0.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.2.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "nodemon": "^3.1.7",
+    "prisma": "^6.0.1"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  }
+}
