@@ -1,0 +1,19 @@
+{
+  "name": "novel-backend-workers",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create novel-db",
+    "db:migrate": "wrangler d1 execute novel-db --file=./migrations/0001_init.sql",
+    "db:seed": "wrangler d1 execute novel-db --file=./migrations/0002_seed.sql"
+  },
+  "dependencies": {
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "wrangler": "^3.99.0"
+  }
+}
