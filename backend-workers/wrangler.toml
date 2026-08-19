@@ -1,6 +1,7 @@
 name = "novel-backend"
 main = "src/index.js"
 compatibility_date = "2024-12-01"
+account_id = "66dfd03d8683d29265bb89e29486fa40"
 
 [vars]
 JWT_SECRET = "myNovelSecretKey2026!@#"
@@ -9,4 +10,4 @@ CORS_ORIGIN = "*"
 [[d1_databases]]
 binding = "DB"
 database_name = "novel-db"
-database_id = "PLACEHOLDER"
+database_id = "fd96bdcc-ea28-4f21-ac38-acccbb0a2079"
